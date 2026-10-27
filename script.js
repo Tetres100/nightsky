@@ -54,3 +54,58 @@ bouton.addEventListener('click', function() {
         <strong>Âge :</strong> ${ageLune.toFixed(1)} jours dans le cycle
     `;
 });
+
+
+
+const map = L.map('map').setView([0, 0], 2);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    minZoom: 1,
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+let marker = null;
+const infoCoords = document.getElementById('info-coords');
+
+
+map.on('click', function(e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    infoCoords.textContent = `Coordonnées : Lat ${lat.toFixed(4)}, Lng ${lng.toFixed(4)}`;
+
+    if (marker) {
+        marker.setLatLng([lat, lng]);
+    } else {
+        marker = L.marker([lat, lng]).addTo(map);
+    }
+});
+
+
+const btnLocaliser = document.getElementById('btn-localiser');
+btnLocaliser.addEventListener('click', function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                map.setView([lat, lng], 10);
+                infoCoords.textContent = `Coordonnées : Lat ${lat.toFixed(4)}, Lng ${lng.toFixed(4)}`;
+
+                if (marker) {
+                    marker.setLatLng([lat, lng]);
+                } else {
+                    marker = L.marker([lat, lng]).addTo(map);
+                }
+            },
+            (error) => {
+                alert("Impossible de récupérer votre position GPS.");
+            }
+        );
+    } else {
+        alert("La géolocalisation n'est pas supportée par votre navigateur.");
+    }
+});
+

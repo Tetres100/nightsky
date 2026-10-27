@@ -3,6 +3,9 @@
 <head>
     <link rel="stylesheet" href="style.css">
     <title>Nightsky project</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
     <h1>Hiiyaaa</h1>
@@ -12,7 +15,9 @@
     <input type="date" id="date-choisie">
     <button id="bouton-valider">Valider</button>
     <p id="resultat-date"></p>
-
+    <button id="btn-localiser">Se localiser</button>
+    <p id="info-coords">Coordonnéees : Aucune sélectionnée</p>
+    <div id="map"></div>
 
 
 

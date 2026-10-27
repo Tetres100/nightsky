@@ -3,4 +3,19 @@ body {
     color: #ffffff;
     font-family: Arial, Helvetica, sans-serif;
     padding: 20px;
+    position: relative;
 }
+
+#map {
+    position: absolute;
+    top: 50px;
+    right: 20px;
+    height: 400px;
+    width: 400px;
+    border-radius: 250px; 
+    z-index: 1000;
+}
+
+
+
+
