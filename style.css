@@ -1,7 +1,11 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Text+Me+One&display=swap');
 body {
     background-color: blue;
     color: #ffffff;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: "Text Me One", sans-serif;
+    font-weight: 500;
+    font-style: bold;
     padding: 20px;
     position: relative;
 }
@@ -16,6 +20,12 @@ body {
     z-index: 1000;
 }
 
-
+#btn-localiser {
+    position: absolute;
+    top: 475px;
+    right: 175px;
+    border-radius: 0px; 
+    z-index: 0;
+}
 
 
