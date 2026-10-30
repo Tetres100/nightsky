@@ -8,14 +8,7 @@ const btnLocaliser = document.getElementById('btn-localiser');
 let derniereLat = null;
 let derniereLng = null;
 
-bouton.addEventListener('click', function() {
-    const dateStr = inputDate.value;
-    
-    if (dateStr === "") {
-        resultatDate.textContent = "Oups, aucune date choisie !";
-        return;
-    }
-
+function obtenirIlluminationLune(dateStr) {
     const dateChoisie = new Date(dateStr);
     const referenceNouvelleLune = new Date('2024-01-11');
     const dureeCycle = 29.53058867;
@@ -51,11 +44,24 @@ bouton.addEventListener('click', function() {
         nomPhase = "Nouvelle Lune 🌑";
     }
 
+    return { illumination, nomPhase, ageLune };
+}
+
+bouton.addEventListener('click', function() {
+    const dateStr = inputDate.value;
+    
+    if (dateStr === "") {
+        resultatDate.textContent = "Oups, aucune date choisie !";
+        return;
+    }
+
+    const lune = obtenirIlluminationLune(dateStr);
+
     resultatDate.innerHTML = `
         <strong>Date :</strong> ${dateStr} <br>
-        <strong>Phase :</strong> ${nomPhase} <br>
-        <strong>Luminosité :</strong> ${illumination}% <br>
-        <strong>Âge :</strong> ${ageLune.toFixed(1)} jours dans le cycle
+        <strong>Phase :</strong> ${lune.nomPhase} <br>
+        <strong>Luminosité :</strong> ${lune.illumination}% <br>
+        <strong>Âge :</strong> ${lune.ageLune.toFixed(1)} jours dans le cycle
     `;
 
     if (derniereLat !== null && derniereLng !== null) {
@@ -86,34 +92,39 @@ async function selectionnerPosition(lat, lng) {
     }
 
     const dateStr = inputDate.value || new Date().toISOString().split('T')[0];
+    
+    // Récupération sécurisée de l'illumination
+    const luneInfo = obtenirIlluminationLune(dateStr);
+    const illumination = luneInfo ? luneInfo.illumination : 0;
 
     try {
-        infoAstroMeteo.innerHTML = `
-            <p>☁️ <strong>Météo / Nuages :</strong> Chargement...</p>
-            <p>🌅 <strong>Coucher du soleil :</strong> Chargement...</p>
-            <p>🌄 <strong>Lever du soleil :</strong> Chargement...</p>
-        `;
+        document.getElementById('valeur-nuages').textContent = "Chargement...";
+        document.getElementById('valeur-soleil').textContent = "Chargement...";
+        document.getElementById('score-ciel').textContent = "...";
+        document.getElementById('score-lune').textContent = "...";
         
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset,cloud_cover_mean&timezone=auto&start_date=${dateStr}&end_date=${dateStr}`;
         
         const response = await fetch(url);
         const data = await response.json();
 
-        const nuages = (data.daily && data.daily.cloud_cover_mean) ? data.daily.cloud_cover_mean[0] : "N/A";
+        const nuages = (data.daily && data.daily.cloud_cover_mean) ? data.daily.cloud_cover_mean[0] : 0;
         const sunrise = (data.daily && data.daily.sunrise) ? data.daily.sunrise[0].split('T')[1] : "N/A";
         const sunset = (data.daily && data.daily.sunset) ? data.daily.sunset[0].split('T')[1] : "N/A";
 
-        infoAstroMeteo.innerHTML = `
-            <p>☁️ <strong>Météo / Nuages (Moy.) :</strong> ${nuages}%</p>
-            <p>🌅 <strong>Coucher du soleil :</strong> ${sunset}</p>
-            <p>🌄 <strong>Lever du soleil :</strong> ${sunrise}</p>
-        `;
+        const conditions = calculerConditionNuit(illumination, nuages);
+
+        document.getElementById('valeur-nuages').textContent = nuages + "%";
+        document.getElementById('valeur-soleil').textContent = `Coucher ${sunset} / Lever ${sunrise}`;
+        document.getElementById('score-ciel').textContent = conditions.cielNocturne;
+        document.getElementById('score-lune').textContent = conditions.photoLune;
 
     } catch (error) {
         console.error("Erreur API Météo:", error);
-        infoAstroMeteo.innerHTML = `
-            <p>❌ Impossible de charger la météo pour ce spot.</p>
-        `;
+        document.getElementById('valeur-nuages').textContent = "Erreur";
+        document.getElementById('valeur-soleil').textContent = "Erreur";
+        document.getElementById('score-ciel').textContent = "-";
+        document.getElementById('score-lune').textContent = "-";
     }
 }
 
@@ -139,3 +150,18 @@ btnLocaliser.addEventListener('click', function() {
         alert("La géolocalisation n'est pas supportée par votre navigateur.");
     }
 });
+
+function calculerConditionNuit(illuminationLune, pourcentageNuages) {
+    const facteurNuages = Math.max(0, 1 - (pourcentageNuages / 100));
+
+    const facteurLuneCiel = 1 - (illuminationLune / 100);
+    const scoreCielNocturne = 10 * facteurNuages * facteurLuneCiel;
+
+    const facteurLunePhoto = illuminationLune / 100;
+    const scorePhotoLune = 10 * facteurNuages * facteurLunePhoto;
+
+    return {
+        cielNocturne: Number(scoreCielNocturne.toFixed(1)),
+        photoLune: Number(scorePhotoLune.toFixed(1))
+    };
+}
